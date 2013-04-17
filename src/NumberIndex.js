@@ -36,25 +36,27 @@
 
 	//This assumes that val2 >= val1
 	//What is done with the higher and lower halves is symmetric; can try to make this half as long
-	NumberIndex.prototype.select = function(val1, val2) {
+	NumberIndex.prototype.select = function(queryObject) {
 
 		"use strict";
 
-		var v1 = this.converterToNumber(val1),
-			v2 =  this.converterToNumber(val2);
+		if(queryObject.inRange) {
 
-		if(v1 > v2) {
-			throw new Error("NumberIndex: first number must be less than or equal to second number"); 
+			var v1 = this.converterToNumber(queryObject.inRange[0]),
+				v2 =  this.converterToNumber(queryObject.inRange[1]);
+
+			if(v1 > v2) {
+				throw new Error("NumberIndex: first number must be less than or equal to second number"); 
+			}
+
+			var indexRange = db.search.findIndexRangeForValRange(this.sArr, v1, v2);
+
+			if(!indexRange) {
+				return [];
+			} else {
+				return indicesToElements(this.sArrIndexToRowIndex, indexRange.firstIndex, indexRange.lastIndex);
+			}
 		}
-
-		var indexRange = db.search.findIndexRangeForValRange(this.sArr, v1, v2);
-
-		if(!indexRange) {
-			return [];
-		} else {
-			return indicesToElements(this.sArrIndexToRowIndex, indexRange.firstIndex, indexRange.lastIndex);
-		}
-
 	}
 
 	function indicesToElements(arr, firstIndex, lastIndex) {

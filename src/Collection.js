@@ -15,12 +15,13 @@
         this.completeDataArray = completeDataArray;
         this.resultIndices = "just loaded";
 
-        for(field in columnMap) {
+        for(var field in columnMap) {
             if(columnMap.hasOwnProperty(field)) {
-                var keyExtractorFn = typeof columnMap[field].keyExtractorFn === "undefined"
-                                        ? function(o) { return o[field]; }
-                                        : columnMap[field].keyExtractorFn;
-                this.columnsObj[field] = new columnMap[field].index(completeDataArray, {keyExtractor: keyExtractorFn});
+                var opts = typeof columnMap[field].opts === "undefined" ? {} : columnMap[field].opts;
+                if(typeof opts.keyExtractor === "undefined") {
+                    opts.keyExtractor = function(o) { return o[field]; }
+                }
+                this.columnsObj[field] = new columnMap[field].index(completeDataArray, opts);
             }
         }
 
@@ -29,7 +30,7 @@
 
     Collection.prototype.where = function(columnName, valArr) {
         var colObj = this.columnsObj[columnName];
-    	return new Collection(colObj.select.apply(colObj, valArr), this);	
+    	return new Collection(colObj.select(valArr), this);	
     }
 
     Collection.prototype.get = function() {

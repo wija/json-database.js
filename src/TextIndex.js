@@ -57,16 +57,18 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 		return this;
 	}
 
-	TextIndex.prototype.select = function() {
-		var str = arguments[0];
-		var words = this.tokenizer(str).map(this.wordNormalizer);
-		for(var result = [], i = 0, n = words.length; i < n; i++) {
-			if(this.stopWords[words[i]] !== true) {
-				result.push(this.t.findWord(words[i], i !== n - 1).sort(function(a,b) { return a - b}));
+	TextIndex.prototype.select = function(queryObject) {
+		if(queryObject.findAll) {
+			var str = queryObject.findAll;
+			var words = this.tokenizer(str).map(this.wordNormalizer);
+			for(var result = [], i = 0, n = words.length; i < n; i++) {
+				if(this.stopWords[words[i]] !== true) {
+					result.push(this.t.findWord(words[i], i !== n - 1).sort(function(a,b) { return a - b}));
+				}
 			}
+			result.sort(function(a,b) { return a.length - b.length; });
+			return result.reduce(db.sets.intersection);
 		}
-		result.sort(function(a,b) { return a.length - b.length; });
-		return result.reduce(db.sets.intersection);
 	}
 
 	exports.TextIndex = TextIndex;

@@ -32,30 +32,33 @@
 	}
 
 	//was function(pastResult, valArr)
-	CategoryIndex.prototype.select = function() {
+	CategoryIndex.prototype.select = function(queryObject) {
 
-		var valArr = [].slice.call(arguments).sort();   //note that valArr, valsRemoved, valsAdded concern *arguments*
+		if(queryObject.any) {
+			
+			var valArr = queryObject.any.sort();   //note that valArr, valsRemoved, valsAdded concern *arguments*
 
-		var cs = db.sets.complements(valArr, this.pastResult.valArr);
-		var valsRemoved = cs[0], valsAdded = cs[1];
+			var cs = db.sets.complements(valArr, this.pastResult.valArr);
+			var valsRemoved = cs[0], valsAdded = cs[1];
 
-		//these can be folds
+			//these can be folds
 
-		var exit = [];
-		for(var i = 0, n = valsRemoved.length; i < n; i++)
-			if(this.dict[valsRemoved[i]])
-				exit = db.sets.union(this.dict[valsRemoved[i]], exit);
-		
-		var enter = [];
-		for(var i = 0, n = valsAdded.length; i < n; i++)
-			if(this.dict[valsAdded[i]])
-				enter = db.sets.union(this.dict[valsAdded[i]], enter);
+			var exit = [];
+			for(var i = 0, n = valsRemoved.length; i < n; i++)
+				if(this.dict[valsRemoved[i]])
+					exit = db.sets.union(this.dict[valsRemoved[i]], exit);
+			
+			var enter = [];
+			for(var i = 0, n = valsAdded.length; i < n; i++)
+				if(this.dict[valsAdded[i]])
+					enter = db.sets.union(this.dict[valsAdded[i]], enter);
 
-		this.pastResult = 
-			{"result": db.sets.union(enter, db.sets.complement(exit, this.pastResult.result)), 
-			 "valArr": valArr};
+			this.pastResult = 
+				{"result": db.sets.union(enter, db.sets.complement(exit, this.pastResult.result)), 
+				 "valArr": valArr};
 
-		return this.pastResult.result;
+			return this.pastResult.result;
+		}
 	}
 
 	CategoryIndex.prototype.getValues = function() {

@@ -26,6 +26,7 @@ db.csvToJsonArray("./SCAD_2.0_downloadable_version_v2.csv", cb, function(d) { ts
     if(typeof module !== 'undefined' && module.exports) { // node
         db = {};
         db.Codebook = require('./Codebook').Codebook;
+        d3 = require('d3');
     } else { // browser
         db = window.db;
     }

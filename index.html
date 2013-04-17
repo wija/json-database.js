@@ -2,6 +2,7 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
+	<script src="http://d3js.org/d3.v3.min.js"></script>
     <script type="text/javascript" src="./databasetest.js"></script>
     <script type="text/javascript" src="./src/Palette.js"></script>
 
@@ -113,7 +114,8 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 					  jsonArray,
 
 	              	  { eventid: { index: db.NumberIndex },
-		           	    countryname: { keyExtractorFn: function(o) {return o["countryname"];}, 			  index: db.CategoryIndex }, 
+		           	    countryname: { index: db.CategoryIndex, 
+		           	    			   opts: { keyExtractor: function(o) {return o["countryname"];}}}, 
 		           	    startdate:   { index: db.DateIndex }, 
 		           	    enddate:     { index: db.DateIndex },
 		           	    etype:  	 { index: db.CategoryIndex },
@@ -230,7 +232,7 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 								//made at least temporarily global so can use in reDraw
 								startDate = ext[0].getTime(); 
 								endDate = ext[1].getTime();
-								ps.evaluate("startdate", [dateFormat(ext[0]), dateFormat(ext[1])]);
+								ps.evaluate("startdate", {inRange: [dateFormat(ext[0]), dateFormat(ext[1])]});
 							}
 
 				            brush = d3.svg.brush()
@@ -268,7 +270,7 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 	                  })});
 
 		function newTextInput(inputObj, preparedStmt, label) {
-			preparedStmt.evaluate(label, [inputObj.value]);
+			preparedStmt.evaluate(label, {findAll: inputObj.value});
 		}
 
 		function newMultiSelect(selectObj, preparedStmt, label) {
@@ -279,7 +281,7 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 					options.push(which);
 				}
 			}
-			preparedStmt.evaluate(label, options);
+			preparedStmt.evaluate(label, {any: options});
 		}
 
 		function redrawTable(parentElement, resultArr) {

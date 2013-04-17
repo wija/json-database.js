@@ -118,11 +118,10 @@ describe('QueryTemplate.js', function() {
 					ps = new db.QueryTemplate(
 							dataset, 
 							db.qtIntersect(
-								db.qtField("etype","etype"), 
-								db.qtField("countryname","countryname"),
-								db.qtField("startdate","startdate"),
-								db.qtField("issuenote","issuenote")
-								),
+								db.qtField("etype"), 
+								db.qtField("countryname"),
+								db.qtField("startdate"),
+								db.qtField("issuenote")),
 							//{"exit": exitFromTable.bind(this, "dataTable"),
 							// "enter": enterToTable.bind(this, "dataTable")};
 							function(resultObj) { 
@@ -152,10 +151,10 @@ describe('QueryTemplate.js', function() {
 			runs(function() {
 				retVal = false;
 				runs(function() {
-					ps.evaluate("etype", ["Limited Strike"]);
-					ps.evaluate("countryname", ["Algeria"]);
-					ps.evaluate("startdate", ["1-Jan-90", "1-Jan-11"]);
-					ps.evaluate("issuenote", ["steel"]);
+					ps.evaluate("etype", {any: ["Limited Strike"]});
+					ps.evaluate("countryname", {any: ["Algeria"]});
+					ps.evaluate("startdate", {inRange: ["1-Jan-90", "1-Jan-11"]});
+					ps.evaluate("issuenote", {findAll: "steel"});
 				});
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208]) });
@@ -165,7 +164,7 @@ describe('QueryTemplate.js', function() {
 		it('reselection of same from categorical', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("countryname", ["Algeria"]); });
+				runs(function() { ps.evaluate("countryname", {any: ["Algeria"]}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208])});
 	    	});
@@ -174,7 +173,7 @@ describe('QueryTemplate.js', function() {
 		it('selection of multiple from categorical but intersected out', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("countryname", ["Algeria","Angola"]); });
+				runs(function() { ps.evaluate("countryname", {any: ["Algeria","Angola"]}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208])});
 	    	});
@@ -183,7 +182,7 @@ describe('QueryTemplate.js', function() {
 		it('selection of non-existent from categorical', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("countryname", ["RandomCountryName"]); });
+				runs(function() { ps.evaluate("countryname", {any: ["RandomCountryName"]}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([])});
 	    	});
@@ -192,7 +191,7 @@ describe('QueryTemplate.js', function() {
 		it('selection of multiple from categorical but intersected out', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("countryname", ["Algeria","Angola"]); });
+				runs(function() { ps.evaluate("countryname", {any: ["Algeria","Angola"]}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208])});
 	    	});
@@ -201,7 +200,7 @@ describe('QueryTemplate.js', function() {
 		it('new text expanding what intersects out', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("issuenote", ["strike"]); });
+				runs(function() { ps.evaluate("issuenote", {findAll: "strike"}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208,5400002,5400004])});
 	    	});
@@ -212,7 +211,7 @@ describe('QueryTemplate.js', function() {
 		it('additional text narrowing matches', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("issuenote", ["strike morning"]); });
+				runs(function() { ps.evaluate("issuenote", {findAll: "strike morning"}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([5400002])});
 	    	});
@@ -221,7 +220,7 @@ describe('QueryTemplate.js', function() {
 		it('deleted text to expanded matches', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("issuenote", ["p"]); });
+				runs(function() { ps.evaluate("issuenote", {findAll: "p"}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([5400002,5400004])});
 	    	});
@@ -230,7 +229,7 @@ describe('QueryTemplate.js', function() {
 		it('additional categorical', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("etype", ["Organized Demonstration", "Limited Strike"]); });
+				runs(function() { ps.evaluate("etype", {any: ["Organized Demonstration", "Limited Strike"]}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150001,5400002,5400004])});
 	    	});
