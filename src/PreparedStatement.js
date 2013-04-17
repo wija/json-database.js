@@ -50,7 +50,7 @@
 		this.paramNameToColumnNameMap = {};
 
 		for(var i = 0, n = this.flattenedStmt.length; i < n; i++) {
-			this.cache[i] = [];
+			this.cache[i] = new jsonDatabase.Dataset([], this.dataset);
 			if(this.flattenedStmt[i].type === "whereClause") {
 				this.paramNameToCacheMap[this.flattenedStmt[i].name] = i; 
 				this.paramNameToColumnNameMap[this.flattenedStmt[i].name] = this.flattenedStmt[i].name;
@@ -62,8 +62,8 @@
 	//can I actually have "select" interpret the same stmts?
 	//can also just have a table of fns to be looked up -- but that would take away the nice interface
 	function __psify(fn, name) { return function() { return [].slice.call(arguments).concat(arguments.length).concat({"type": "operator", "name": name, "def": fn}); }; }
-	var psAnd = __psify(jsonDatabase.Dataset.prototype.and, "and");
-	var psOr = __psify(jsonDatabase.Dataset.prototype.or, "or");
+	var psIntersection = __psify(jsonDatabase.Dataset.prototype.intersection, "intersection");
+	var psUnion = __psify(jsonDatabase.Dataset.prototype.union, "union");
 	function psWhere(name, columnName)  { return {"type": "whereClause", "name": name, "columnName": columnName };  }
 
 	PreparedStatement.prototype.evaluate = function(name, argArr) {
@@ -121,7 +121,7 @@
 			}
 		}
 
-		var n = this.dataset.toJSON(stack.pop().value);
+		var n = stack.pop().value.get();
 		//console.log(n);
 
 		//this.cachedRetVal = jsonDatabase.lazyRowConstruction.getCombinedRowIterator({"result": n}, this.dataset);
@@ -136,8 +136,8 @@
 	exports.PreparedStatement = {};
 	exports.PreparedStatement.PreparedStatement = PreparedStatement;
 	exports.PreparedStatement.psWhere = psWhere;
-	exports.PreparedStatement.psAnd = psAnd;
-	exports.PreparedStatement.psOr = psOr;
+	exports.PreparedStatement.psIntersection = psIntersection;
+	exports.PreparedStatement.psUnion = psUnion;
 
 })(typeof exports === 'undefined' ? this.jsonDatabase : exports);
 

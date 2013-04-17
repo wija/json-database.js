@@ -105,7 +105,9 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 
 				function(jsonArray) {
 
-            		dataset = new jsonDatabase.Dataset(
+					dataset = new jsonDatabase.Dataset();
+
+		    		dataset.loadData(
 
 					  jsonArray,
 
@@ -116,52 +118,44 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
                    		  enddate:      { header: "enddate",     columnType: jsonDatabase.DateIndex},
                    		  etype:        { header: "etype", 	  columnType: jsonDatabase.CategoryIndex},
                    		  issuenote:    { header: "issuenote",   columnType: jsonDatabase.TextIndex}
-                  	  },
+                  	  });
 
-	                  function(dataset) {	//not entirely comfortable with this being a passed value
+              		//shouldn't need to explictly include the psWheres in creating a preparedstmt
+					ps = new jsonDatabase.PreparedStatement.PreparedStatement(
+							dataset, 
+							jsonDatabase.PreparedStatement.psIntersection(
+								jsonDatabase.PreparedStatement.psWhere("etype"), 
+								jsonDatabase.PreparedStatement.psWhere("countryname"),
+								jsonDatabase.PreparedStatement.psWhere("startdate"),
+								jsonDatabase.PreparedStatement.psWhere("issuenote")
+								),
+							function(resultArr) { 
+								redrawTable("dataTable", resultArr);
+							});
 
-	                  		//shouldn't need to explictly include the psWheres in creating a preparedstmt
-							ps = new jsonDatabase.PreparedStatement.PreparedStatement(
-									dataset, 
-									jsonDatabase.PreparedStatement.psAnd(
-										jsonDatabase.PreparedStatement.psWhere("etype"), 
-										jsonDatabase.PreparedStatement.psWhere("countryname"),
-										jsonDatabase.PreparedStatement.psWhere("startdate"),
-										jsonDatabase.PreparedStatement.psWhere("issuenote")
-										),
-									function(resultArr) { 
-										redrawTable("dataTable", resultArr);
-									});
+					function fillSelect(idName,columnName) {
+              		  		var s = document.getElementById(idName);
+              		  		//var opts = dataset.getValues(columnName);
+              		  		var opts = dataset.columnsObj[columnName].getValues();
+					  		for(var i = 0; i < opts.length; i++) {
+					  			if(opts[i] !== "-9") {  //total special case
+					  				s.options[s.options.length] = new Option(opts[i], opts[i]);
+					  			}
+					  		}
+					}
+					fillSelect("selectIncidentType", "etype");
+					fillSelect("selectPlaceName", "countryname");
 
-							function fillSelect(idName,columnName) {
-	                  		  		var s = document.getElementById(idName);
-	                  		  		//var opts = dataset.getValues(columnName);
-	                  		  		var opts = dataset.columnsObj[columnName].getValues();
-							  		for(var i = 0; i < opts.length; i++) {
-							  			if(opts[i] !== "-9") {  //total special case
-							  				s.options[s.options.length] = new Option(opts[i], opts[i]);
-							  			}
-							  		}
-							}
-							fillSelect("selectIncidentType", "etype");
-							fillSelect("selectPlaceName", "countryname");
+					document.getElementById("selectIncidentType")
+						.addEventListener("change", function() { newMultiSelect(this,ps,"etype"); });
 
-							document.getElementById("selectIncidentType")
-								.addEventListener("change", function() { newMultiSelect(this,ps,"etype"); });
+					document.getElementById("selectPlaceName")
+						.addEventListener("change", function() { newMultiSelect(this,ps,"countryname"); });
 
-							document.getElementById("selectPlaceName")
-								.addEventListener("change", function() { newMultiSelect(this,ps,"countryname"); });
+					document.getElementById("inputDescription")
+						.addEventListener("keyup", function() { newTextInput(this,ps,"issuenote"); });
 
-							document.getElementById("selectStartDate")
-								.addEventListener("change", function() { newRangeInput(this,ps,"startdate"); });
-						
-							document.getElementById("selectTimeSpan")
-								.addEventListener("change", function() { newTimeSpanRangeInput(this); });
-
-							document.getElementById("inputDescription")
-								.addEventListener("keyup", function() { newTextInput(this,ps,"issuenote"); });
-
-							p = new Palette();
+					p = new Palette();
 
         dimensions = { width: 700, height: 40 }
         padding    = { outerPaddingWidth: 5, placenameWidth: 70, innerPaddingWidth: 5,
@@ -185,7 +179,7 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 							chart = d3.select("body").append("svg")
     							.attr("class", "chart")
     							.attr("width", dimensions.width)
-    							.attr("height", maxOffset + dimensions.height + 10 + 40);
+    							.attr("height", maxOffset + dimensions.height + 10 + 40 + 30);  //last 30 is arbitrary
 
     						var dateFormat = d3.time.format("%d-%b-%y");
             				xScale = (function() {
@@ -194,6 +188,10 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
                                         .range([corners.xTimelineLeft, corners.xTimelineRight])
                                         .clamp(true);
                           	})();
+
+                          	var selectorScale = d3.time.scale().range([corners.xTimelineLeft, corners.xTimelineRight]),
+								selectorAxis = d3.svg.axis().scale(selectorScale).orient("bottom");
+							selectorScale.domain([dateFormat.parse("1-Jan-89"), dateFormat.parse("31-Dec-10")]);
 
 							for(var i = 0, n = cnames.length; i < n; i++) {
     							chart.append("text")
@@ -224,11 +222,18 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
  								//x.domain(brush.empty() ? x2.domain() : brush.extent());
   								//focus.select("path").attr("d", area);
   								//focus.select(".x.axis").call(xAxis);
-  								console.log("runs, yeah?");
+
+								var dateFormat = d3.time.format("%d-%b-%y");
+								var ext = brush.extent();
+
+								//made at least temporarily global so can use in reDraw
+								startDate = ext[0].getTime(); 
+								endDate = ext[1].getTime();
+								ps.evaluate("startdate", [dateFormat(ext[0]), dateFormat(ext[1])]);
 							}
 
 				            brush = d3.svg.brush()
-    								  .x(xScale)
+    								  .x(selectorScale)
     								  .on("brush", brushed);
 
 							context = chart.append("g")
@@ -238,26 +243,28 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 							      .attr("x", corners.xTimelineLeft)
 							      .attr("width", corners.xTimelineRight - corners.xTimelineLeft)
 							      .attr("y", (maxOffset + dimensions.height + 10))
-							      .attr("height", 40);
+							      .attr("height", 30);
 							     
 							/*context.append("path")
 							      .datum(data)
 							      .attr("d", area2);
 							*/
-							/*context.append("g")
-							      .attr("class", "x axis")
-							      .attr("transform", "translate(0," + height2 + ")")
-							      .call(xAxis2);
-							*/
+							context.append("g")
+							      .attr("class", "axis")
+							      .attr("transform", "translate(0," + 30 + ")")
+							      .style("font-size", padding.labelHeight)
+	                              .style("font-family", "sans-serif")
+							      //.attr("transform", "translate(0," + (maxOffset + dimensions.height + 10 + 35) + ")")
+							      .call(selectorAxis);
 
 							context.append("g")
 							      .attr("class", "x brush")
 							      .call(brush)
 							    .selectAll("rect")
 							      .attr("y", -6)
-							      .attr("height", maxOffset + dimensions.height + 10 + 7);
+							      .attr("height", 30); //maxOffset + dimensions.height + 10 + 7);
 
-	                  })})});
+	                  })});
 
 		function newTextInput(inputObj, preparedStmt, label) {
 			preparedStmt.evaluate(label, [inputObj.value]);
@@ -272,25 +279,6 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 				}
 			}
 			preparedStmt.evaluate(label, options);
-		}
-
-		//This round-trips: format(new Date(format.parse("22-Nov-02").getTime()))
-		dateSpan = 2592000000;  //30 days
-		function newRangeInput(rangeObj, preparedStmt, label) {
-			var format = d3.time.format("%d-%b-%y");
-			startDate = +rangeObj.value;  //made at least temporarily global so can use in reDraw
-			endDate = +rangeObj.value + dateSpan;
-			var startDateStr = format(new Date(startDate)),
-				endDateStr = format(new Date(endDate));
-			document.getElementById("dateRange")
-				.textContent = startDateStr + " - " + endDateStr;
-			preparedStmt.evaluate(label, [startDateStr, endDateStr]);
-		}
-
-		//THIS DOESN'T SEEM TO ACTUALLY BE FORCING REDRAWS??????
-		function newTimeSpanRangeInput(rangeObj) {
-			dateSpan = +rangeObj.value;
-			newRangeInput(document.getElementById("selectStartDate"), ps, "startdate");
 		}
 
 		function redrawTable(parentElement, resultArr) {
@@ -319,9 +307,14 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
                   //.tickSize(padding.tickHeight)
                   .tickPadding(padding.tickToLabelHeight));
 
+
 			var cs = chart.selectAll("circle")
 			  .data(resultArr, function(d) { return d.eventid; });
-
+			//data, enter, and exit return arrays. their internal formats are not entirely trivial,
+			//but it is presumably possible to partition them and invoke, at least, the insert operations
+			//using setTimeout of requestAnimationFrame to break up rendering
+			//OR: I can use d3 for scales, etc., but simply implement my own enter/exit/update functions
+			//OR: If broken up by country (by me), d3 might be able to handle those subsets adequately
 			cs.enter().insert("circle")
 			  .attr("cx", function(d, i) { return xScale(dateFormat.parse(d.startdate).getTime()); })
 			  .attr("cy", function(d) { return countryOffsets[d.countryname] + corners.yTimelineBottom - padding.axisToIncidentsHeight; })
@@ -369,14 +362,7 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 			<span class="label">Country:</span><br/>
 			<select id="selectPlaceName" multiple="yes"></select>
 		</div>
-		<div style="float:left;">
-			<!-- note somewhat arbitrary min date -->
-			<span class="label">Start Date:</span><br/>
-			<input id="selectStartDate" type="range" min="650634192000" max="1293771600000" step="11088576000" value="972202896000"/><br/>
-			<span class="label">Time Span:</span><br/>
-			<input id="selectTimeSpan" type="range" min="2592000000" max="315360000000" step="3127680000" value="17064000000"/><br/>
-			<span id="dateRange" class="dateRange"></span>
-		</div>
+
 		<div style="float:left;">
 			<span class="label">Description:</span><br/>
 			<input type="text" id="inputDescription">

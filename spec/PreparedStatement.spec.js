@@ -95,8 +95,10 @@ describe('PreparedStatement.js', function() {
 				}, 
 
 				function(jsonArray) {
-		    		dataset = new jsonDatabase.Dataset(
+		    		
+		    		dataset = new jsonDatabase.Dataset();
 
+		    		dataset.loadData(
 					  jsonArray,
 
 		              {
@@ -106,26 +108,24 @@ describe('PreparedStatement.js', function() {
 		           		  enddate:      { header: "enddate",     columnType: jsonDatabase.DateIndex},
 		           		  etype:        { header: "etype", 	  columnType: jsonDatabase.CategoryIndex},
 		           		  issuenote:    { header: "issuenote",   columnType: jsonDatabase.TextIndex}
-		          	  },
+		          	  });
 
-		              function(dataset) {	//not entirely comfortable with this being a passed value
+					ps = new jsonDatabase.PreparedStatement.PreparedStatement(
+							dataset, 
+							jsonDatabase.PreparedStatement.psIntersection(
+								jsonDatabase.PreparedStatement.psWhere("etype","etype"), 
+								jsonDatabase.PreparedStatement.psWhere("countryname","countryname"),
+								jsonDatabase.PreparedStatement.psWhere("startdate","startdate"),
+								jsonDatabase.PreparedStatement.psWhere("issuenote","issuenote")
+								),
+							//{"exit": exitFromTable.bind(this, "dataTable"),
+							// "enter": enterToTable.bind(this, "dataTable")};
+							function(resultObj) { 
+								retVal = resultObj; 
+							});
 
-							ps = new jsonDatabase.PreparedStatement.PreparedStatement(
-									dataset, 
-									jsonDatabase.PreparedStatement.psAnd(
-										jsonDatabase.PreparedStatement.psWhere("etype","etype"), 
-										jsonDatabase.PreparedStatement.psWhere("countryname","countryname"),
-										jsonDatabase.PreparedStatement.psWhere("startdate","startdate"),
-										jsonDatabase.PreparedStatement.psWhere("issuenote","issuenote")
-										),
-									//{"exit": exitFromTable.bind(this, "dataTable"),
-									// "enter": enterToTable.bind(this, "dataTable")};
-									function(resultObj) { 
-										retVal = resultObj; 
-									});
-							doneFlag = true;
+					doneFlag = true;
 
-		              });
 				});
 		});
 
@@ -138,6 +138,7 @@ describe('PreparedStatement.js', function() {
 		beforeEach(function() {
 			this.addMatchers({
 			    toMatchByEventId: function(expected) {
+			    	console.log(this.actual);
 			      return arrEq(this.actual.map(function(v) {return +v.eventid; }), expected);
 			    }
 			  });
