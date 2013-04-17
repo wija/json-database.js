@@ -1,14 +1,14 @@
 //Trie.spec.js
 
-var jsonDatabase = {};
-jsonDatabase.Trie = require("../src/Trie").Trie;
+var db = {};
+db.Trie = require("../src/Trie").Trie;
 
 describe('Trie.js', function() {
 
 	var t = null;
 
 	beforeEach(function() {
-		t = new jsonDatabase.Trie();
+		t = new db.Trie();
 		t.addWord("hello", 1);
 		t.addWord("hi", 2);
 		t.addWord("him", 3);

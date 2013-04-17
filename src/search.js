@@ -194,6 +194,6 @@
 	exports.search.findIndexRangeForVal = findIndexRangeForVal;
 	exports.search.findIndexRangeForValRange = findIndexRangeForValRange;
 
-})(typeof exports === 'undefined' ? this.jsonDatabase : exports);
+})(typeof exports === 'undefined' ? this.db : exports);
 
 

@@ -16,22 +16,22 @@
                               }
                   }
 
-jsonDatabase.csvToJsonArray("./SCAD_2.0_downloadable_version_v2.csv", cb, function(d) { tstArr = d; })
+db.csvToJsonArray("./SCAD_2.0_downloadable_version_v2.csv", cb, function(d) { tstArr = d; })
 
 */
 
 ;(function(exports) {
 
-    var jsonDatabase;
+    var db;
     if(typeof module !== 'undefined' && module.exports) { // node
-        jsonDatabase = {};
-        jsonDatabase.Codebook = require('./Codebook').Codebook;
+        db = {};
+        db.Codebook = require('./Codebook').Codebook;
     } else { // browser
-        jsonDatabase = window.jsonDatabase;
+        db = window.db;
     }
 
     function csvToJsonArray(datasetText, codebook, callback) {
-        var cb = new jsonDatabase.Codebook(codebook);
+        var cb = new db.Codebook(codebook);
         var parsedCSV = d3.csv.parse(datasetText),
             ks = cb.getKeys();
         for(var j = 0, m = ks.length; j < m; j++) {
@@ -47,5 +47,5 @@ jsonDatabase.csvToJsonArray("./SCAD_2.0_downloadable_version_v2.csv", cb, functi
 
     exports.csvToJsonArray = csvToJsonArray;
 
-})(typeof exports === 'undefined' ? this.jsonDatabase : exports);
+})(typeof exports === 'undefined' ? this.db : exports);
 

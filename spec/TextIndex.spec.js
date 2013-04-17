@@ -1,14 +1,14 @@
 //TextIndex.spec.js
 
-var jsonDatabase = {};
-jsonDatabase.TextIndex = require("../src/TextIndex").TextIndex;
+var db = {};
+db.TextIndex = require("../src/TextIndex").TextIndex;
 
 describe('TextIndex.js', function() {
 
 	var ss = ["Boring sentences are just as useful as interesting ones.",
 			  "Boredom is not, of course, what this is really about.",
 			  "Though, I do think that writing tests is rather boring"];
-	var itc = new jsonDatabase.TextIndex(ss, "itc");
+	var itc = new db.TextIndex(ss, "itc");
 
 	describe('select', function() {
 

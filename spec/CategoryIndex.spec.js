@@ -1,13 +1,13 @@
 //CategoryIndex.spec.js
 
-var jsonDatabase = {};
-jsonDatabase.CategoryIndex = require("../src/CategoryIndex").CategoryIndex;
+var db = {};
+db.CategoryIndex = require("../src/CategoryIndex").CategoryIndex;
 
 describe('CategoryIndex.js', function() {
 
 	var arr = ["a","b","c","a","a","b","c","c"];
 	//INDICES:  0   1   2   3   4   5   6   7
-	var icc = new jsonDatabase.CategoryIndex(arr);
+	var icc = new db.CategoryIndex(arr);
 
 	describe('select', function() {
 

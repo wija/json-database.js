@@ -144,4 +144,4 @@
 
 	exports.Trie = Trie;
  
-})(typeof exports === 'undefined' ? this.jsonDatabase : exports);
+})(typeof exports === 'undefined' ? this.db : exports);

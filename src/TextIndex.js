@@ -6,7 +6,7 @@
 var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 			  {text: "Boredom is not, of course, what this is really about."},
 			  {text: "Though, I do think that writing tests is rather boring"}],
-	itc = new jsonDatabase.TextIndex(ss, { keyExtractor: function(o) { return o.text; } });
+	itc = new db.TextIndex(ss, { keyExtractor: function(o) { return o.text; } });
 
 	itc.getIndicesForString("rather bori")
 
@@ -15,14 +15,14 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 
 ;(function (exports) {
 
-	var jsonDatabase;
+	var db;
 	if(typeof module !== 'undefined' && module.exports) { // node
-		jsonDatabase = {};
-		jsonDatabase.sets = require('./sets').sets;
-		jsonDatabase.Trie = require('./trie').Trie;
-		jsonDatabase.stopWords = require('./stopwords').stopWords;
+		db = {};
+		db.sets = require('./sets').sets;
+		db.Trie = require('./trie').Trie;
+		db.stopWords = require('./stopwords').stopWords;
 	} else { // browser
-		jsonDatabase = window.jsonDatabase;
+		db = window.db;
 	}
 	
 	//opts = extractKeyFn, tokenizer, wordNormalizer, stopWords
@@ -40,9 +40,9 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 			  				.map(function(w) { return w.replace(/^[,.;:]*/,"").replace(/[,.;:]*$/,""); });
 				};
 
-		this.stopWords = opts.stopWords || jsonDatabase.stopWords.getStopWords("en");
+		this.stopWords = opts.stopWords || db.stopWords.getStopWords("en");
 
-		this.t = new jsonDatabase.Trie();
+		this.t = new db.Trie();
 
 		for(var i = 0, n = arr.length; i < n; i++) {
 			var words = this.tokenizer(this.keyExtractor(arr[i]));
@@ -66,11 +66,11 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 			}
 		}
 		result.sort(function(a,b) { return a.length - b.length; });
-		return result.reduce(jsonDatabase.sets.intersection);
+		return result.reduce(db.sets.intersection);
 	}
 
 	exports.TextIndex = TextIndex;
 
-})(typeof exports === 'undefined' ? this.jsonDatabase : exports);
+})(typeof exports === 'undefined' ? this.db : exports);
 
 

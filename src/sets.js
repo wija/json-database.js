@@ -132,5 +132,5 @@
 	exports.sets.complement = complement;
 	exports.sets.complements = complements;
 
-})(typeof exports === 'undefined' ? this.jsonDatabase : exports);
+})(typeof exports === 'undefined' ? this.db : exports);
 

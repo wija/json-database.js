@@ -2,13 +2,13 @@
 
 ;(function (exports) {
 
-	var jsonDatabase;
+	var db;
 	if(typeof module !== 'undefined' && module.exports) { // node
-		jsonDatabase = {};
-		jsonDatabase.sets = require('./sets').sets;
-		jsonDatabase.search = require('./search').search; 
+		db = {};
+		db.sets = require('./sets').sets;
+		db.search = require('./search').search; 
 	} else { // browser
-		jsonDatabase = window.jsonDatabase;
+		db = window.db;
 	}
 
 	function NumberIndex(arr, opts) {
@@ -36,13 +36,18 @@
 
 	//This assumes that val2 >= val1
 	//What is done with the higher and lower halves is symmetric; can try to make this half as long
-	NumberIndex.prototype.select = function() {
+	NumberIndex.prototype.select = function(val1, val2) {
 
 		"use strict";
-		var val1 = arguments[0],
-			val2 = arguments[1];
 
-		var indexRange = jsonDatabase.search.findIndexRangeForValRange(this.sArr, this.converterToNumber(val1), this.converterToNumber(val2));
+		var v1 = this.converterToNumber(val1),
+			v2 =  this.converterToNumber(val2);
+
+		if(v1 > v2) {
+			throw new Error("NumberIndex: first number must be less than or equal to second number"); 
+		}
+
+		var indexRange = db.search.findIndexRangeForValRange(this.sArr, v1, v2);
 
 		if(!indexRange) {
 			return [];
@@ -78,7 +83,7 @@
 
 	exports.NumberIndex = NumberIndex;
 
-})(typeof exports === 'undefined' ? this.jsonDatabase : exports);
+})(typeof exports === 'undefined' ? this.db : exports);
 
 
 

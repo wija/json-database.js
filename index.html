@@ -1,15 +1,16 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
- 
+
+    <script type="text/javascript" src="./databasetest.js"></script>
+    <script type="text/javascript" src="./src/Palette.js"></script>
+
+ <!--
     <script type="text/javascript" src="./src/d3/d3.js"></script>
-    <script type="text/javascript" src="./src/jsonDatabase.js"></script>
+    <script type="text/javascript" src="./src/db.js"></script>
     <script type="text/javascript" src="./src/sets.js"></script>
-    <!-- <script type="text/javascript" src="./src/lazyRowConstruction.js"></script> -->
-    <!-- <script type="text/javascript" src="./src/closure-generation-utils.js"></script> -->
     <script type="text/javascript" src="./src/Trie.js"></script>
     <script type="text/javascript" src="./src/search.js"></script>
-    <!-- <script type="text/javascript" src="./src/Column.js"></script> -->
     <script type="text/javascript" src="./src/CategoryIndex.js"></script>
     <script type="text/javascript" src="./src/NumberIndex.js"></script>
     <script type="text/javascript" src="./src/stopwords.js"></script>
@@ -17,10 +18,10 @@
     <script type="text/javascript" src="./src/DateIndex.js"></script>
     <script type="text/javascript" src="./src/Codebook.js"></script>
     <script type="text/javascript" src="./src/csv-utils.js"></script>
-    <script type="text/javascript" src="./src/Dataset.js"></script> 
-    <script type="text/javascript" src="./src/PreparedStatement.js"></script>
-    <script type="text/javascript" src="./src/Palette.js"></script>
-
+    <script type="text/javascript" src="./src/Collection.js"></script> 
+    <script type="text/javascript" src="./src/operators.js"></script> 
+    <script type="text/javascript" src="./src/QueryTemplate.js"></script>
+-->
 	<style type="text/css">
 
 		div, span .label {
@@ -84,7 +85,7 @@
 
 d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 		
-		jsonDatabase.csvToJsonArray(
+		db.csvToJsonArray(
 
 				datasetText, 
 				
@@ -105,30 +106,30 @@ d3.text("./SCAD_2.0_downloadable_version_v2.csv", function(datasetText) {
 
 				function(jsonArray) {
 
-					dataset = new jsonDatabase.Dataset();
+					dataset = new db.Collection();
 
 		    		dataset.loadData(
 
 					  jsonArray,
 
-	                  {
-      			          eventid: 	 { header: "eventid", 	  columnType: jsonDatabase.NumberIndex},
-                   		  countryname:  { header: "countryname", columnType: jsonDatabase.CategoryIndex}, 
-                   		  startdate:    { header: "startdate",   columnType: jsonDatabase.DateIndex}, 
-                   		  enddate:      { header: "enddate",     columnType: jsonDatabase.DateIndex},
-                   		  etype:        { header: "etype", 	  columnType: jsonDatabase.CategoryIndex},
-                   		  issuenote:    { header: "issuenote",   columnType: jsonDatabase.TextIndex}
-                  	  });
+	              	  { eventid: { index: db.NumberIndex },
+		           	    countryname: { keyExtractorFn: function(o) {return o["countryname"];}, 			  index: db.CategoryIndex }, 
+		           	    startdate:   { index: db.DateIndex }, 
+		           	    enddate:     { index: db.DateIndex },
+		           	    etype:  	 { index: db.CategoryIndex },
+		           	    issuenote:   { index: db.TextIndex }});
 
-              		//shouldn't need to explictly include the psWheres in creating a preparedstmt
-					ps = new jsonDatabase.PreparedStatement.PreparedStatement(
+              		//shouldn't need to explictly include the qtFields in creating a preparedstmt
+					ps = new db.QueryTemplate(
+
 							dataset, 
-							jsonDatabase.PreparedStatement.psIntersection(
-								jsonDatabase.PreparedStatement.psWhere("etype"), 
-								jsonDatabase.PreparedStatement.psWhere("countryname"),
-								jsonDatabase.PreparedStatement.psWhere("startdate"),
-								jsonDatabase.PreparedStatement.psWhere("issuenote")
-								),
+
+							db.qtIntersect(
+								db.qtField("etype"), 
+								db.qtField("countryname"),
+								db.qtField("startdate"),
+								db.qtField("issuenote")),
+
 							function(resultArr) { 
 								redrawTable("dataTable", resultArr);
 							});

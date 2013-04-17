@@ -1,12 +1,12 @@
 //NumberIndex.spec.js
 
 
-var jsonDatabase = {};
-jsonDatabase.NumberIndex = require("../src/NumberIndex").NumberIndex;
+var db = {};
+db.NumberIndex = require("../src/NumberIndex").NumberIndex;
 
 describe('NumberIndex.js', function() {
 
-	var inc = new jsonDatabase.NumberIndex([9,3,7,8,0,5,1,2,"4",4,8,6]); //note double 8, double 4
+	var inc = new db.NumberIndex([9,3,7,8,0,5,1,2,"4",4,8,6]); //note double 8, double 4
 
 	describe('select', function() {
 
