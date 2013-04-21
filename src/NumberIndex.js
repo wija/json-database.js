@@ -19,8 +19,10 @@
 
 		this.arr2 = arr.slice(0); 		
 		this.sArr = []; 				//values sorted in ascending order
-		this.sArrIndexToRowIndex = [];  //row indices corresponding to sorted values
+		this.valToRowIndex = {};
 		
+		this.cachedResult = [];
+
 		for(var i = 0, n = this.arr2.length; i < n; i++)
 			this.arr2[i] = this.converterToNumber(this.keyExtractor(this.arr2[i]));
 
@@ -28,7 +30,31 @@
 		//to simultaneously generate both arrays
 		addArrayIndicesToElements(this.arr2);  //mutates passed in arr but not this.arr
 		this.arr2.sort(function(ia1, ia2) { return ia1[1] - ia2[1]; });
-		splitArrayIndicesAndElements(this.arr2, this.sArrIndexToRowIndex, this.sArr);
+		
+		var lastV = undefined;
+		for(var i = 0, n = this.arr2.length; i < n; i++) {
+			var val = this.arr2[i][1],
+				rowIndex = this.arr2[i][0];
+			if(val !== lastV) {
+				this.sArr.push(val);
+				this.valToRowIndex[val] = [rowIndex];
+			} else {
+				insertInOrder(this.valToRowIndex[val], rowIndex);
+			}
+			lastV = this.arr2[i][1];
+		}
+
+		function insertInOrder(arr, v) {
+			for(var i = 0, n = arr.length; i < n; i++) {
+				if(v < arr[i]) {
+					arr.splice(i,0,v);
+					break;
+				}
+			}
+			if(i === n) { arr.push(v); }
+		}
+
+		this.cachedValRange = false;
 
 		return this;
 
@@ -42,32 +68,129 @@
 
 		if(queryObject.inRange) {
 
-			var v1 = this.converterToNumber(queryObject.inRange[0]),
-				v2 =  this.converterToNumber(queryObject.inRange[1]);
+			return selectRange.call(this, this.converterToNumber(queryObject.inRange[0]),
+							   			  this.converterToNumber(queryObject.inRange[1]));
 
-			if(v1 > v2) {
-				throw new Error("NumberIndex: first number must be less than or equal to second number"); 
+		} else if(queryObject.equal) {
+
+			return selectRange.call(this, this.converterToNumber(queryObject.equal),
+										  this.converterToNumber(queryObject.equal));
+
+		} else if(queryObject.min) {
+
+			return [this.sArrIndexToRowIndex[0]];
+		
+		} else if(queryObject.max) {
+
+			return [this.sArrIndexToRowIndex[this.sArr.length - 1]];
+
+		} else if(queryObject.greaterThanOrEqual) {
+
+			return selectRange.call(this, this.converterToNumber(queryObject.greaterThan), this.sArr[this.sArr.length - 1]);
+
+		} else if(queryObject.lessThanOrEqual) {
+
+			return selectRange.call(this, this.sArr[0], this.converterToNumber(queryObject.lessThan));
+		
+		}
+
+	}
+
+	function selectRange(v1, v2) {
+
+		if(v1 > v2) {
+			throw new Error("NumberIndex: first number must be less than or equal to second number"); 
+		}
+		
+		var enterIndices = [],
+			exitIndices = [];
+
+		if(this.cachedValRange) {  //CAN'T I GET RID OF THIS SPECIAL CASE
+
+			if(v1 < this.cachedValRange.v1) {
+				
+				enterIndices = getIndicesForValRange(this.sArr, this.valToRowIndex, v1, this.cachedValRange.v1, {excludeVal2: true});
+
+			} else if(v1 > this.cachedValRange.v1) {
+
+				exitIndices = getIndicesForValRange(this.sArr, this.valToRowIndex, this.cachedValRange.v1, v1, {excludeVal2: true});
+
 			}
 
-			var indexRange = db.search.findIndexRangeForValRange(this.sArr, v1, v2);
+			if(v2 < this.cachedValRange.v2) {
 
-			if(!indexRange) {
-				return [];
-			} else {
-				return indicesToElements(this.sArrIndexToRowIndex, indexRange.firstIndex, indexRange.lastIndex);
+				var moreExitIndices = getIndicesForValRange(this.sArr, this.valToRowIndex, v2, this.cachedValRange.v2, {excludeVal1: true});
+
+				exitIndices = exitIndices.length === 0
+					? moreExitIndices
+					: db.sets.union(exitIndices, moreExitIndices);
+
+			} else if(v2 > this.cachedValRange.v2) {
+
+				var moreEnterIndices = getIndicesForValRange(this.sArr, this.valToRowIndex, this.cachedValRange.v2, v2, {excludeVal1: true});
+				
+				enterIndices = enterIndices.length === 0
+					? moreEnterIndices
+					: db.sets.union(enterIndices, moreEnterIndices);
 			}
+
+			if(enterIndices.length !== 0) {
+				this.cachedResult = db.sets.union(this.cachedResult, enterIndices);
+			}
+
+			if(exitIndices.length !== 0) {
+				this.cachedResult = db.sets.complement(exitIndices, this.cachedResult);
+			}
+
+		} else {
+
+			this.cachedResult = getIndicesForValRange(this.sArr, this.valToRowIndex, v1, v2);
+
+		}
+		
+		//console.log(this.cachedResult.length, enterIndices.length, exitIndices.length);
+		this.cachedValRange = {v1: v1, v2: v2};	
+		
+		return this.cachedResult;
+
+	}
+
+	function getIndicesForValRange(sArr, valToRowIndex, val1, val2, opts) {
+
+		var lowerRange = db.search.findIndexRangeForVal(sArr, val1),
+			higherRange = db.search.findIndexRangeForVal(sArr, val2);		
+
+		var lower = lowerRange.lastIndex, //lowerRange.found === true ? lowerRange.firstIndex : lowerRange.lastIndex;
+			higher = higherRange.firstIndex; //higherRange.found === true ? higherRange.lastIndex : higherRange.firstIndex;
+
+		
+		if(higher < lower) { 
+
+			//above true iff val1 to val2 range is completely before or after the
+			//range of values in sArr
+
+			return [];
+
+		} else {
+
+			var result = [];
+
+			for(var i = lower, n = higher + 1; i < n; i++) {
+				result.push(valToRowIndex[sArr[i]]);
+			}
+
+			if((opts && opts.excludeVal1) && (sArr[lower] === val1)) {
+				result.splice(0,1);
+			}
+
+			if((opts && opts.excludeVal2) && (sArr[higher] === val2) && (result.length !== 0)) {
+				result.splice(-1,1);
+			}
+
+			return result.length === 0 ? [] : result.reduce(db.sets.union);
 		}
 	}
 
-	function indicesToElements(arr, firstIndex, lastIndex) {
-
-		var result = [];
-
-		for(var i = firstIndex, n = lastIndex + 1; i < n; i++)
-			result.push(arr[i]);	
-
-		return result.sort(function(a,b) { return a - b; });
-	}
 
 	//destructive
 	function addArrayIndicesToElements(arr) {
@@ -84,6 +207,8 @@
 	}
 
 	exports.NumberIndex = NumberIndex;
+
+exports._getIndicesForValRange = getIndicesForValRange;
 
 })(typeof exports === 'undefined' ? this.db : exports);
 

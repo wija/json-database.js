@@ -59,9 +59,6 @@
 		}
 	}
 
-	//NOTE HARDCODING OF "DATASET" BELOW
-	//can I actually have "select" interpret the same stmts?
-	//can also just have a table of fns to be looked up -- but that would take away the nice interface
 	function __psify(fn, name) { return function() { return [].slice.call(arguments).concat(arguments.length).concat({"type": "operator", "name": name, "def": fn}); }; }
 	var qtIntersect = __psify(db.intersection, "intersection");
 	var qtUnion = __psify(db.union, "union");

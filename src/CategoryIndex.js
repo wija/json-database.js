@@ -13,6 +13,8 @@
 	//add a converter fn (a la codebooks)
 	function CategoryIndex(arr, opts) {
 		
+		this.completeDataArray = arr;
+
 		var opts = opts || {};
 		this.keyExtractor = opts.keyExtractor || function(o) { return o; };
 
@@ -31,11 +33,10 @@
 		return this;
 	}
 
-	//was function(pastResult, valArr)
 	CategoryIndex.prototype.select = function(queryObject) {
 
 		if(queryObject.any) {
-			
+
 			var valArr = queryObject.any.sort();   //note that valArr, valsRemoved, valsAdded concern *arguments*
 
 			var cs = db.sets.complements(valArr, this.pastResult.valArr);
@@ -53,12 +54,17 @@
 				if(this.dict[valsAdded[i]])
 					enter = db.sets.union(this.dict[valsAdded[i]], enter);
 
-			this.pastResult = 
-				{"result": db.sets.union(enter, db.sets.complement(exit, this.pastResult.result)), 
-				 "valArr": valArr};
+			var result = db.sets.union(enter, db.sets.complement(exit, this.pastResult.result));
 
-			return this.pastResult.result;
+		} else if(queryObject.equal) {
+
+			var result = this.dict[queryObject.equal];
+
 		}
+
+		this.pastResult = {"result": result, "valArr": valArr ? valArr : []};
+
+		return result;
 	}
 
 	CategoryIndex.prototype.getValues = function() {

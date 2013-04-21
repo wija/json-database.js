@@ -28,6 +28,8 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 	//opts = extractKeyFn, tokenizer, wordNormalizer, stopWords
 	function TextIndex(arr, opts) {		
 
+		this.completeDataArray = arr;
+
 		var opts = opts || {};
 
 		this.keyExtractor = opts.keyExtractor || function(o) { return o; };
@@ -58,8 +60,10 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 	}
 
 	TextIndex.prototype.select = function(queryObject) {
-		if(queryObject.findAll) {
-			var str = queryObject.findAll;
+
+		if(queryObject.autoCompleteSearch) {
+
+			var str = queryObject.autoCompleteSearch;
 			var words = this.tokenizer(str).map(this.wordNormalizer);
 			for(var result = [], i = 0, n = words.length; i < n; i++) {
 				if(this.stopWords[words[i]] !== true) {
@@ -68,6 +72,7 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 			}
 			result.sort(function(a,b) { return a.length - b.length; });
 			return result.reduce(db.sets.intersection);
+
 		}
 	}
 

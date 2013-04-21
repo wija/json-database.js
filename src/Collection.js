@@ -6,31 +6,60 @@
 
     function Collection(resultIndices, datasetObj) {
         this.resultIndices = resultIndices || [];
-        this.columnsObj = datasetObj ? datasetObj.columnsObj : {};
+        this.indexRegistry = datasetObj ? datasetObj.indexRegistry : {};
         this.completeDataArray = datasetObj ? datasetObj.completeDataArray : [];
     }
 
-    Collection.prototype.loadData = function(completeDataArray, columnMap, completionCallback) {
-        this.columnsObj = {};
+    Collection.prototype.loadData = function(completeDataArray, indexMap, completionCallback) {
+        this.indexRegistry = {};
         this.completeDataArray = completeDataArray;
         this.resultIndices = "just loaded";
 
-        for(var field in columnMap) {
-            if(columnMap.hasOwnProperty(field)) {
-                var opts = typeof columnMap[field].opts === "undefined" ? {} : columnMap[field].opts;
+        for(var field in indexMap) {
+            if(indexMap.hasOwnProperty(field)) {
+                var opts = typeof indexMap[field].opts === "undefined" ? {} : indexMap[field].opts;
                 if(typeof opts.keyExtractor === "undefined") {
                     opts.keyExtractor = function(o) { return o[field]; }
                 }
-                this.columnsObj[field] = new columnMap[field].index(completeDataArray, opts);
+                this.indexRegistry[field] = new indexMap[field].index(completeDataArray, opts);
             }
         }
 
         return this;
     }
 
-    Collection.prototype.where = function(columnName, valArr) {
-        var colObj = this.columnsObj[columnName];
-    	return new Collection(colObj.select(valArr), this);	
+    Collection.prototype.where = function(fieldName, queryObject) {
+        
+        var indexObj = this.indexRegistry[fieldName];
+        
+        if(indexObj && !queryObject.selectAll) {
+
+            return new Collection(indexObj.select(queryObject), this);
+        
+        } else {
+
+            if(queryObject.predicate) {
+
+                //how to properly deal with keyExtractor here??????
+                var keyExtractor = function(o) { return o[fieldName]; };
+                var result = [];
+                for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
+                    if(queryObject.predicate(keyExtractor(this.completeDataArray[i]))) {
+                        result.push(i);
+                    } 
+                }
+                return new Collection(result, this);
+
+            } else if(queryObject.selectAll) {
+
+                //this is a touch absurd
+                var result = [];
+                for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
+                    result.push(i); 
+                }
+                return new Collection(result, this);
+            }
+        }
     }
 
     Collection.prototype.get = function() {
@@ -44,8 +73,6 @@
             return result;
         }
     }
-
-    //test of two datasets referrring to same completeDataArray
 
     exports.Collection = Collection;
 

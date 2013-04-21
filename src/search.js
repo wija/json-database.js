@@ -98,20 +98,8 @@
 
 		if(searchResult.found === false) 
 			return {"found": false, "firstIndex": searchResult.lower - 1, "lastIndex": searchResult.upper + 1};
-		
-		//for exclude endVal, need to decrement until reach different value
-		for(var maxIndex = searchResult.midpoint, 
-				beyondMax = searchResult.upper; 
-			sArr[maxIndex] === val && maxIndex <= beyondMax; 
-			maxIndex++) ;
-		
-		//for exclude startVal, need to increment until reach different value
-		for(var minIndex = searchResult.midpoint, 
-				beyondMin = searchResult.lower; 
-			sArr[minIndex] === val && minIndex >= beyondMin; 
-			minIndex--) ;
 
-		return {"found": true, "firstIndex": minIndex + 1, "lastIndex": maxIndex - 1};
+		return {"found": true, "firstIndex": searchResult.midpoint, "lastIndex": searchResult.midpoint};
 
 	}
 /*
@@ -156,6 +144,98 @@
 		function.  
 	*/
 
+
+	function findIndexRangeForValRange(sArr, val1, val2) {
+
+		var lowerRange = findIndexRangeForVal(sArr, val1),
+			higherRange = findIndexRangeForVal(sArr, val2);		
+
+		var lower = lowerRange.lastIndex, //lowerRange.found === true ? lowerRange.firstIndex : lowerRange.lastIndex;
+			higher = higherRange.firstIndex; //higherRange.found === true ? higherRange.lastIndex : higherRange.firstIndex;
+
+		//this happens iff the val1 to val2 range lies completely before or completely after the range of values in sArr
+		if(higher < lower) {
+			return false;
+		} else {
+			return {"firstIndex": lower, "lastIndex": higher};
+		}
+	}
+/*
+	function getIndicesForValRange(sArr, valToRowIndex, val1, val2, opts) {
+
+		var lowerRange = findIndexRangeForVal(sArr, val1),
+			higherRange = findIndexRangeForVal(sArr, val2);		
+
+		var lower = lowerRange.lastIndex, //lowerRange.found === true ? lowerRange.firstIndex : lowerRange.lastIndex;
+			higher = higherRange.firstIndex; //higherRange.found === true ? higherRange.lastIndex : higherRange.firstIndex;
+
+		
+		if(higher < lower) { 
+
+			//above true iff val1 to val2 range is completely before or after the
+			//range of values in sArr
+
+			return [];
+
+		} else {
+
+			var result = [];
+
+			for(var i = lower, n = higher + 1; i < n; i++) {
+				result.push(valToRowIndex[sArr[i]]);
+			}
+
+			if((opts && opts.excludeVal1) && (sArr[lower] === val1)) {
+				result.splice(0,1);
+			}
+
+			if((opts && opts.excludeVal2) && (sArr[higher] === val2) && (result.length !== 0)) {
+				result.splice(-1,1);
+			}
+
+			return result.length === 0 ? [] : result.reduce(db.sets.union);
+		}
+	}
+
+*/
+	function getValsForValRange(sArr, val1, val2, opts) {
+
+		var lowerRange = findIndexRangeForVal(sArr, val1),
+			higherRange = findIndexRangeForVal(sArr, val2);		
+
+		var lower = lowerRange.lastIndex, //lowerRange.found === true ? lowerRange.firstIndex : lowerRange.lastIndex;
+			higher = higherRange.firstIndex; //higherRange.found === true ? higherRange.lastIndex : higherRange.firstIndex;
+
+		
+		if(higher < lower) { 
+
+			//above true iff val1 to val2 range is completely before or after the
+			//range of values in sArr
+
+			return [];
+
+		} else {
+
+			var result = [];
+
+			for(var i = lower, n = higher + 1; i < n; i++) {
+				result.push(sArr[i]);
+			}
+
+			if((opts && opts.excludeVal1) && (result[0] === val1)) {
+				result.splice(0,1);
+			}
+
+			if((opts && opts.excludeVal2) && (result[-1]) && (result.length !== 0)) {
+				result.splice(-1,1);
+			}
+
+			return result;
+		}
+	}
+
+
+/*
 	function findIndexRangeForValRange(sArr, val1, val2, lower, upper) {
 
 		if(typeof lower !== "undefined" && typeof upper !== "undefined") {
@@ -187,12 +267,15 @@
 			return {"firstIndex": lower, "lastIndex": higher};
 		}
 	}
+*/
 
 	exports.search = {};
 	exports.search.linearSearch = linearSearch;
 	exports.search.binarySearch = binarySearch;
 	exports.search.findIndexRangeForVal = findIndexRangeForVal;
 	exports.search.findIndexRangeForValRange = findIndexRangeForValRange;
+	exports.search.getValsForValRange = getValsForValRange;
+	//exports.search.getIndicesForValRange = getIndicesForValRange;
 
 })(typeof exports === 'undefined' ? this.db : exports);
 

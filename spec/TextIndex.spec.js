@@ -13,28 +13,28 @@ describe('TextIndex.js', function() {
 	describe('select', function() {
 
 		it('should be [1] - same case, appears once', function() {
-			expect(itc.select({findAll: "Boredom"})).toEqual([1]);
+			expect(itc.select({autoCompleteSearch: "Boredom"})).toEqual([1]);
 		});
 
 		it('should be [1] - different case, appears once', function() {
-			expect(itc.select({findAll: "boredom"})).toEqual([1]);
+			expect(itc.select({autoCompleteSearch: "boredom"})).toEqual([1]);
 		});
 
 		it('should be [0, 2] - diffent case, appears multiple times', function() {
-			expect(itc.select({findAll: "boring"})).toEqual([0, 2]);
+			expect(itc.select({autoCompleteSearch: "boring"})).toEqual([0, 2]);
 		});
 
 		it('should be [] - non-existent word', function() {
-			expect(itc.select({findAll: "hello"})).toEqual([]);
+			expect(itc.select({autoCompleteSearch: "hello"})).toEqual([]);
 		});
 
 		//Is the treatment of prefixes clearly right?
 		it('should be [2] - non-existent word that is prefix of existent word', function() {
-			expect(itc.select({findAll: "writ"})).toEqual([2]);
+			expect(itc.select({autoCompleteSearch: "writ"})).toEqual([2]);
 		});
 
 		it('should be [0, 1, 2] - non-existent word that is prefix of multiple existent words', function() {
-			expect(itc.select({findAll: "bor"})).toEqual([0, 1, 2]);
+			expect(itc.select({autoCompleteSearch: "bor"})).toEqual([0, 1, 2]);
 		});
 	});
 

@@ -154,7 +154,7 @@ describe('QueryTemplate.js', function() {
 					ps.evaluate("etype", {any: ["Limited Strike"]});
 					ps.evaluate("countryname", {any: ["Algeria"]});
 					ps.evaluate("startdate", {inRange: ["1-Jan-90", "1-Jan-11"]});
-					ps.evaluate("issuenote", {findAll: "steel"});
+					ps.evaluate("issuenote", {autoCompleteSearch: "steel"});
 				});
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208]) });
@@ -200,7 +200,7 @@ describe('QueryTemplate.js', function() {
 		it('new text expanding what intersects out', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("issuenote", {findAll: "strike"}); });
+				runs(function() { ps.evaluate("issuenote", {autoCompleteSearch: "strike"}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([6150208,5400002,5400004])});
 	    	});
@@ -211,7 +211,7 @@ describe('QueryTemplate.js', function() {
 		it('additional text narrowing matches', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("issuenote", {findAll: "strike morning"}); });
+				runs(function() { ps.evaluate("issuenote", {autoCompleteSearch: "strike morning"}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([5400002])});
 	    	});
@@ -220,7 +220,7 @@ describe('QueryTemplate.js', function() {
 		it('deleted text to expanded matches', function() {
 			runs(function() {
 				retVal = false;
-				runs(function() { ps.evaluate("issuenote", {findAll: "p"}); });
+				runs(function() { ps.evaluate("issuenote", {autoCompleteSearch: "p"}); });
 				waitsFor(function () { return retVal !== false; } , 'Timed out', 1000);
 		    	runs(function() { expect(retVal).toMatchByEventId([5400002,5400004])});
 	    	});
