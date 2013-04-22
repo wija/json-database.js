@@ -2,7 +2,7 @@
 
 ##Overview
 
-Usage is documented in the [wiki](/wiki/Documentation).
+Usage is documented in the [wiki](https://github.com/wija/json-database.js/wiki/Documentation).
 
 This is a browser-based in-memory database designed to allow highly interactive visualizations of large datasets. 
 
