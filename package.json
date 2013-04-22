@@ -1,8 +1,22 @@
 {
+
+	"name": "json-database.js",
+  	"version": "0.1.0",
+  	"description": "In-memory database designed to allow highly interactive visualizations of large datasets",
+  	"main": "src/db.js",
+  	"author": {
+    	"name": "Bill Abresch"
+  	},
+	"licenses": [
+		"MIT"
+	],
 	"scripts": {
+		"build": "node_modules/browserify/bin/cmd.js src/db.js > dist-db.js",
 		"test": "node_modules/jasmine-node/bin/jasmine-node spec/"
 	},
-  	"dependencies": {
-    	"d3": "3.1.4"
+	"dependencies": {},
+  	"devDependencies": {
+    	"jasmine-node": "~1.4.0",
+    	"browserify": "~2.12.0"
   	}
 }
