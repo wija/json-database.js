@@ -1,7 +1,5 @@
 //Collection.js
 
-//completionCallback = function() { console.log("done"); }
-
 ;(function (exports) {
 
     function Collection(resultIndices, datasetObj) {
@@ -32,33 +30,30 @@
         
         var indexObj = this.indexRegistry[fieldName];
         
-        if(indexObj && !queryObject.selectAll) {
+        if(indexObj && !queryObject.selectAll && !queryObject.predicate) {
 
             return new Collection(indexObj.select(queryObject), this);
         
-        } else {
+        } else if(queryObject.predicate) {
 
-            if(queryObject.predicate) {
-
-                //how to properly deal with keyExtractor here??????
-                var keyExtractor = function(o) { return o[fieldName]; };
-                var result = [];
-                for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
-                    if(queryObject.predicate(keyExtractor(this.completeDataArray[i]))) {
-                        result.push(i);
-                    } 
-                }
-                return new Collection(result, this);
-
-            } else if(queryObject.selectAll) {
-
-                //this is a touch absurd
-                var result = [];
-                for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
-                    result.push(i); 
-                }
-                return new Collection(result, this);
+            //how to properly deal with keyExtractor here?
+            var keyExtractor = function(o) { return o[fieldName]; };
+            var result = [];
+            for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
+                if(queryObject.predicate(keyExtractor(this.completeDataArray[i]))) {
+                    result.push(i);
+                } 
             }
+            return new Collection(result, this);
+
+        } else if(queryObject.selectAll) {
+
+            //this is a touch absurd
+            var result = [];
+            for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
+                result.push(i); 
+            }
+            return new Collection(result, this);
         }
     }
 

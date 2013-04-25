@@ -58,8 +58,11 @@
 				}
 			}
 			result.sort(function(a,b) { return a.length - b.length; });
-			return result.reduce(db.sets.intersection);
-
+			if(result.length === 0) {
+				return [];
+			} else {
+				return result.reduce(db.sets.intersection);
+			}
 		}
 	}
 

@@ -23,11 +23,10 @@
 		
 		this.cachedResult = [];
 
+		//This was always kludgy and inefficient, but does it even make sense after
+		//the changes?
 		for(var i = 0, n = this.arr2.length; i < n; i++)
 			this.arr2[i] = this.converterToNumber(this.keyExtractor(this.arr2[i]));
-
-		//This is a kludgy and inefficient approach; instead, a sort algorithm could be modified
-		//to simultaneously generate both arrays
 		addArrayIndicesToElements(this.arr2);  //mutates passed in arr but not this.arr
 		this.arr2.sort(function(ia1, ia2) { return ia1[1] - ia2[1]; });
 		
@@ -78,11 +77,11 @@
 
 		} else if(queryObject.min) {
 
-			return [this.sArrIndexToRowIndex[0]];
+			return this.valToRowIndex[this.sArr[0]];
 		
 		} else if(queryObject.max) {
 
-			return [this.sArrIndexToRowIndex[this.sArr.length - 1]];
+			return this.valToRowIndex[this.sArr[this.sArr.length - 1]];
 
 		} else if(queryObject.greaterThanOrEqual) {
 
@@ -148,13 +147,13 @@
 
 		}
 		
-		//console.log(this.cachedResult.length, enterIndices.length, exitIndices.length);
 		this.cachedValRange = {v1: v1, v2: v2};	
 		
 		return this.cachedResult;
 
 	}
 
+	//generalize and move to search.js?
 	function getIndicesForValRange(sArr, valToRowIndex, val1, val2, opts) {
 
 		var lowerRange = db.search.findIndexRangeForVal(sArr, val1),
@@ -207,8 +206,6 @@
 	}
 
 	exports.NumberIndex = NumberIndex;
-
-exports._getIndicesForValRange = getIndicesForValRange;
 
 })(typeof exports === 'undefined' ? this.db : exports);
 

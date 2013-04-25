@@ -1,31 +1,5 @@
 //QueryTemplate.js
 
-//"prepared statement" can just use a hash from names to returned results
-
-/*
-	ps = new db.QueryTemplate.QueryTemplate(
-			dataset, 
-			db.QueryTemplate.psAnd(
-				db.QueryTemplate.qtField("etype","etype"), 
-				db.QueryTemplate.qtField("countryname","countryname"),
-				db.QueryTemplate.qtField("startdate","startdate"),
-				db.QueryTemplate.qtField("issuenote","issuenote")
-				),
-			function(resultObj) { 
-				cancelAnimationFrame(rafId); 
-				redrawTable("dataTable", resultObj);
-			});
-
-	ps = new db.QueryTemplate.QueryTemplate(
-			dataset, 
-			db.QueryTemplate.psAnd("etype", "countryname", "startdate", "issuenote"),
-			function(resultObj) { 
-				cancelAnimationFrame(rafId); 
-				redrawTable("dataTable", resultObj);
-			});
-
-*/
-
 ;(function (exports) {
 
     var db;
