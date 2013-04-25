@@ -33,84 +33,7 @@
   
 })(typeof window === 'undefined' ? exports : window);
 
-},{"./Collection":2,"./operators":3,"./QueryTemplate":4,"./sets":5,"./Trie":6,"./NumberIndex":7,"./DateIndex":8,"./TextIndex":9,"./stopwords":10,"./CategoryIndex":11,"./search":12}],2:[function(require,module,exports){
-//Collection.js
-
-;(function (exports) {
-
-    function Collection(resultIndices, datasetObj) {
-        this.resultIndices = resultIndices || [];
-        this.indexRegistry = datasetObj ? datasetObj.indexRegistry : {};
-        this.completeDataArray = datasetObj ? datasetObj.completeDataArray : [];
-    }
-
-    Collection.prototype.loadData = function(completeDataArray, indexMap, completionCallback) {
-        this.indexRegistry = {};
-        this.completeDataArray = completeDataArray;
-        this.resultIndices = "just loaded";
-
-        for(var field in indexMap) {
-            if(indexMap.hasOwnProperty(field)) {
-                var opts = typeof indexMap[field].opts === "undefined" ? {} : indexMap[field].opts;
-                if(typeof opts.keyExtractor === "undefined") {
-                    opts.keyExtractor = function(o) { return o[field]; }
-                }
-                this.indexRegistry[field] = new indexMap[field].index(completeDataArray, opts);
-            }
-        }
-
-        return this;
-    }
-
-    Collection.prototype.where = function(fieldName, queryObject) {
-        
-        var indexObj = this.indexRegistry[fieldName];
-        
-        if(indexObj && !queryObject.selectAll && !queryObject.predicate) {
-
-            return new Collection(indexObj.select(queryObject), this);
-        
-        } else if(queryObject.predicate) {
-
-            //how to properly deal with keyExtractor here?
-            var keyExtractor = function(o) { return o[fieldName]; };
-            var result = [];
-            for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
-                if(queryObject.predicate(keyExtractor(this.completeDataArray[i]))) {
-                    result.push(i);
-                } 
-            }
-            return new Collection(result, this);
-
-        } else if(queryObject.selectAll) {
-
-            //this is a touch absurd
-            var result = [];
-            for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
-                result.push(i); 
-            }
-            return new Collection(result, this);
-        }
-    }
-
-    Collection.prototype.get = function() {
-        if(this.resultIndices === "just loaded") {
-            return this.completeDataArray;
-        } else {
-            var result = [];
-            for(var i = 0, n = this.resultIndices.length; i < n; i++) {
-                result.push(this.completeDataArray[this.resultIndices[i]]);
-            }
-            return result;
-        }
-    }
-
-    exports.Collection = Collection;
-
-})(typeof exports === 'undefined' ? this.db : exports);
-
-
-},{}],5:[function(require,module,exports){
+},{"./Collection":2,"./operators":3,"./QueryTemplate":4,"./sets":5,"./Trie":6,"./NumberIndex":7,"./DateIndex":8,"./TextIndex":9,"./stopwords":10,"./CategoryIndex":11,"./search":12}],5:[function(require,module,exports){
 //sets.js
 
 ;(function(exports) {
@@ -244,6 +167,83 @@
 	exports.sets.union = union;
 	exports.sets.complement = complement;
 	exports.sets.complements = complements;
+
+})(typeof exports === 'undefined' ? this.db : exports);
+
+
+},{}],2:[function(require,module,exports){
+//Collection.js
+
+;(function (exports) {
+
+    function Collection(resultIndices, datasetObj) {
+        this.resultIndices = resultIndices || [];
+        this.indexRegistry = datasetObj ? datasetObj.indexRegistry : {};
+        this.completeDataArray = datasetObj ? datasetObj.completeDataArray : [];
+    }
+
+    Collection.prototype.loadData = function(completeDataArray, indexMap, completionCallback) {
+        this.indexRegistry = {};
+        this.completeDataArray = completeDataArray;
+        this.resultIndices = "just loaded";
+
+        for(var field in indexMap) {
+            if(indexMap.hasOwnProperty(field)) {
+                var opts = typeof indexMap[field].opts === "undefined" ? {} : indexMap[field].opts;
+                if(typeof opts.keyExtractor === "undefined") {
+                    opts.keyExtractor = function(o) { return o[field]; }
+                }
+                this.indexRegistry[field] = new indexMap[field].index(completeDataArray, opts);
+            }
+        }
+
+        return this;
+    }
+
+    Collection.prototype.where = function(fieldName, queryObject) {
+        
+        var indexObj = this.indexRegistry[fieldName];
+        
+        if(indexObj && !queryObject.selectAll && !queryObject.predicate) {
+
+            return new Collection(indexObj.select(queryObject), this);
+        
+        } else if(queryObject.predicate) {
+
+            //how to properly deal with keyExtractor here?
+            var keyExtractor = function(o) { return o[fieldName]; };
+            var result = [];
+            for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
+                if(queryObject.predicate(keyExtractor(this.completeDataArray[i]))) {
+                    result.push(i);
+                } 
+            }
+            return new Collection(result, this);
+
+        } else if(queryObject.selectAll) {
+
+            //this is a touch absurd
+            var result = [];
+            for(var i = 0, n = this.completeDataArray.length; i < n; i++) {
+                result.push(i); 
+            }
+            return new Collection(result, this);
+        }
+    }
+
+    Collection.prototype.get = function() {
+        if(this.resultIndices === "just loaded") {
+            return this.completeDataArray;
+        } else {
+            var result = [];
+            for(var i = 0, n = this.resultIndices.length; i < n; i++) {
+                result.push(this.completeDataArray[this.resultIndices[i]]);
+            }
+            return result;
+        }
+    }
+
+    exports.Collection = Collection;
 
 })(typeof exports === 'undefined' ? this.db : exports);
 
@@ -716,7 +716,82 @@
 
 
 
-},{"./sets":5,"./Collection":2}],4:[function(require,module,exports){
+},{"./sets":5,"./Collection":2}],9:[function(require,module,exports){
+//TextIndex.js
+
+;(function (exports) {
+
+	var db;
+	if(typeof module !== 'undefined' && module.exports) { // node
+		db = {};
+		db.sets = require('./sets').sets;
+		db.Trie = require('./trie').Trie;
+		db.stopWords = require('./stopwords').stopWords;
+	} else { // browser
+		db = window.db;
+	}
+	
+	//opts = extractKeyFn, tokenizer, wordNormalizer, stopWords
+	function TextIndex(arr, opts) {		
+
+		this.completeDataArray = arr;
+
+		var opts = opts || {};
+
+		this.keyExtractor = opts.keyExtractor || function(o) { return o; };
+
+		this.wordNormalizer = opts.wordNormalizer || function(s) { return s.toLowerCase(); };
+
+		this.tokenizer = opts.tokenizer || 
+				function(s) {
+			  		return s.split(/\b\s+/)
+			  				.map(function(w) { return w.replace(/^[,.;:]*/,"").replace(/[,.;:]*$/,"").replace(/\|/g," "); });
+				};
+
+		this.stopWords = opts.stopWords || db.stopWords.getStopWords("en");
+
+		this.t = new db.Trie();
+
+		for(var i = 0, n = arr.length; i < n; i++) {
+			var words = this.tokenizer(this.keyExtractor(arr[i]));
+			for(var j = 0, m = words.length; j < m; j++) {
+				var nw = this.wordNormalizer(words[j]);
+				if(this.stopWords[nw] !== true) {
+					this.t.addWord(nw, i);
+				}
+			}
+		}
+
+		return this;
+	}
+
+	TextIndex.prototype.select = function(queryObject) {
+
+		if(queryObject.autoCompleteSearch) {
+
+			var str = queryObject.autoCompleteSearch;
+			var words = this.tokenizer(str).map(this.wordNormalizer);
+			for(var result = [], i = 0, n = words.length; i < n; i++) {
+				if(this.stopWords[words[i]] !== true) {
+					result.push(this.t.findWord(words[i], i !== n - 1).sort(function(a,b) { return a - b}));
+				}
+			}
+			result.sort(function(a,b) { return a.length - b.length; });
+			if(result.length === 0) {
+				return [];
+			} else {
+				return result.reduce(db.sets.intersection);
+			}
+		}
+	}
+
+	exports.TextIndex = TextIndex;
+
+})(typeof exports === 'undefined' ? this.db : exports);
+
+
+
+},{"./sets":5,"./trie":13,"./stopwords":10}],4:[function(require,module,exports){
 //QueryTemplate.js
 
 ;(function (exports) {
@@ -1079,79 +1154,7 @@
 
 })(typeof exports === 'undefined' ? this.db : exports);
 
-},{"./NumberIndex":7}],9:[function(require,module,exports){
-//TextIndex.js
-
-;(function (exports) {
-
-	var db;
-	if(typeof module !== 'undefined' && module.exports) { // node
-		db = {};
-		db.sets = require('./sets').sets;
-		db.Trie = require('./trie').Trie;
-		db.stopWords = require('./stopwords').stopWords;
-	} else { // browser
-		db = window.db;
-	}
-	
-	//opts = extractKeyFn, tokenizer, wordNormalizer, stopWords
-	function TextIndex(arr, opts) {		
-
-		this.completeDataArray = arr;
-
-		var opts = opts || {};
-
-		this.keyExtractor = opts.keyExtractor || function(o) { return o; };
-
-		this.wordNormalizer = opts.wordNormalizer || function(s) { return s.toLowerCase(); };
-
-		this.tokenizer = opts.tokenizer || 
-				function(s) {
-			  		return s.split(/\b\s+/)
-			  				.map(function(w) { return w.replace(/^[,.;:]*/,"").replace(/[,.;:]*$/,""); });
-				};
-
-		this.stopWords = opts.stopWords || db.stopWords.getStopWords("en");
-
-		this.t = new db.Trie();
-
-		for(var i = 0, n = arr.length; i < n; i++) {
-			var words = this.tokenizer(this.keyExtractor(arr[i]));
-			for(var j = 0, m = words.length; j < m; j++) {
-				var nw = this.wordNormalizer(words[j]);
-				if(this.stopWords[nw] !== true) {
-					this.t.addWord(nw, i);
-				}
-			}
-		}
-
-		return this;
-	}
-
-	TextIndex.prototype.select = function(queryObject) {
-
-		if(queryObject.autoCompleteSearch) {
-
-			var str = queryObject.autoCompleteSearch;
-			var words = this.tokenizer(str).map(this.wordNormalizer);
-			for(var result = [], i = 0, n = words.length; i < n; i++) {
-				if(this.stopWords[words[i]] !== true) {
-					result.push(this.t.findWord(words[i], i !== n - 1).sort(function(a,b) { return a - b}));
-				}
-			}
-			result.sort(function(a,b) { return a.length - b.length; });
-			return result.reduce(db.sets.intersection);
-
-		}
-	}
-
-	exports.TextIndex = TextIndex;
-
-})(typeof exports === 'undefined' ? this.db : exports);
-
-
-
-},{"./sets":5,"./trie":13,"./stopwords":10}],11:[function(require,module,exports){
+},{"./NumberIndex":7}],11:[function(require,module,exports){
 //CategoryIndex.js
 
 ;(function(exports) {
