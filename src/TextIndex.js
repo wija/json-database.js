@@ -1,18 +1,5 @@
 //TextIndex.js
 
-//Indexes by word. Not the only way to think of text, of course.
-
-/*
-var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
-			  {text: "Boredom is not, of course, what this is really about."},
-			  {text: "Though, I do think that writing tests is rather boring"}],
-	itc = new db.TextIndex(ss, { keyExtractor: function(o) { return o.text; } });
-
-	itc.getIndicesForString("rather bori")
-
-	itc.getIndicesForString("bori rather")
-*/
-
 ;(function (exports) {
 
 	var db;
@@ -39,7 +26,7 @@ var ss = [{text: "Boring sentences are rather as useful as interesting ones."},
 		this.tokenizer = opts.tokenizer || 
 				function(s) {
 			  		return s.split(/\b\s+/)
-			  				.map(function(w) { return w.replace(/^[,.;:]*/,"").replace(/[,.;:]*$/,""); });
+			  				.map(function(w) { return w.replace(/^[,.;:]*/,"").replace(/[,.;:]*$/,"").replace(/\|/g," "); });
 				};
 
 		this.stopWords = opts.stopWords || db.stopWords.getStopWords("en");
